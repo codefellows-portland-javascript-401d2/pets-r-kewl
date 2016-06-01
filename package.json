@@ -1,0 +1,27 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "env $(cat .env) mocha",
+    "start": "node server.js",
+    "dev": "env $(cat .env) nodemon server.js",
+    "watch-test": "env $(cat .env) mocha -w"
+  },
+  "author": "Marty Nelson <marty@martypdx.com> (@martypdx)",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^0.8.6",
+    "body-parser": "^1.15.1",
+    "express": "^4.13.4",
+    "express-session": "^1.13.0",
+    "grant-express": "^3.6.2",
+    "jsonwebtoken": "^7.0.0",
+    "mongoose": "^4.4.19",
+    "twitter": "^1.3.0"
+  },
+  "devDependencies": {
+    "chai-http": "^2.0.1"
+  }
+}
