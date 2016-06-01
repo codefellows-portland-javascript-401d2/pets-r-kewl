@@ -1,8 +1,10 @@
 {
   "name": "server",
   "version": "1.0.0",
+  "engines": {
+    "node": "6.1.0"
+  },
   "description": "",
-  "main": "index.js",
   "scripts": {
     "test": "env $(cat .env) mocha",
     "start": "node server.js",
