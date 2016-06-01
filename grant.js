@@ -1,7 +1,7 @@
 module.exports = {
 	server: {
-		protocol: 'http',
-		host: '127.0.0.1:3000'
+		protocol: process.env.NODE_ENV === 'production' ? 'https' : 'http',
+		host: process.env.HOST || '127.0.0.1:3000'
 	},
 //   "facebook": {
 //     "key": "[APP_ID]",
