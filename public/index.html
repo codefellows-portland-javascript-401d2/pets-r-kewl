@@ -15,10 +15,94 @@
 	<script src="js/getToken.js"></script>
 	<script src='js/ractive.js'></script>
 	<script src="/socket.io/socket.io.js"></script>
-
+	
+	<script id="app" type="text/html">
+		<div><a href='login.html' onclick="logout();">log out</a></div>
+		<chat></chat>
+		<h2>Pets</h2>
+		<ul>
+			{{#each pets as pet}}
+				<li>{{pet.name}} the {{pet.type}}</li>
+			{{/each}}
+		</ul>
+	</script>
+	
+	<style>
+		.chat {
+			position: absolute;
+			top: 0; right: 0; bottom: 0;
+			width: 250px;
+			border-left: 2px solid steelblue;
+			background: lightsteelblue;
+			padding-left: 10px;
+		}
+		
+		.chat .message {
+			position: absolute;
+			left: 2px; right: 2px; bottom: 3px;
+			height: 50px;
+			width: 96%;
+		}
+		
+		.chat ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;	
+		}
+		
+	</style>
+	
+	<script id="chat" type="text/html">
+		<section class="chat">
+			<h2>Messages</h2>
+			<ul>
+				{{#each messages as message}}
+					<li><strong>{{message.user}}:</strong> {{message.text}}</li>
+				{{/each}}
+			</ul>
+			<textarea class="message" 
+				      on-keypress="sendMessage( event.original )" 
+					  value="{{message}}"></textarea>
+		</section>
+	</script>
+	
 	<script>
 		function initApp( token ){
+			
 			const request = superagent;
+			
+			Ractive.components.chat = Ractive.extend({
+				template: '#chat',
+				data: function(){
+					return {
+						message: '',
+						messages: []
+					};
+				},
+				oninit() {
+					const socket = this.socket = io();
+					
+					socket.on( 'connect', () => {
+						socket.emit( 'token', token );
+					});
+					
+					socket.on( 'invalid', err => {
+						console.log( err );
+					});
+					  
+					socket.on( 'message', message => {
+						this.push( 'messages', message );
+					});
+						
+				},
+				sendMessage( event ) {
+					if( event.which !== 13 ) return;
+					event.preventDefault();
+					const text = this.get( 'message');
+					this.socket.emit( 'message', { text } );
+					this.set( 'message' );
+				}
+			});
 			
 			const app = new Ractive({
 				el: 'main',
@@ -30,7 +114,6 @@
 				}
 			});
 			
-  			const socket = io();	
 		}
 		
 	</script>
@@ -43,16 +126,7 @@
 			});
 	</script>
 	
-	
-	<script id="app" type="text/html">
-		<div><a href='login.html' onclick="logout();">log out</a></div>
-		<h2>Pets</h2>
-		<ul>
-			{{#each pets as pet}}
-				<li>{{pet.name}} the {{pet.type}}</li>
-			{{/each}}
-		</ul>
-	</script>
+
 	
 	
 	
