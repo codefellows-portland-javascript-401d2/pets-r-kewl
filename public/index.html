@@ -3,31 +3,10 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Welcome to pets</title>
-</head>
-<body>
-	<header>
-		<h1>Welcome to Pets!</h1>
-	</header>
-	
-	<main></main>
-	
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
-	<script src="js/getToken.js"></script>
-	<script src='js/ractive.js'></script>
-	<script src="/socket.io/socket.io.js"></script>
-	
-	<script id="app" type="text/html">
-		<div><a href='login.html' onclick="logout();">log out</a></div>
-		<chat></chat>
-		<h2>Pets</h2>
-		<ul>
-			{{#each pets as pet}}
-				<li>{{pet.name}} the {{pet.type}}</li>
-			{{/each}}
-		</ul>
-	</script>
-	
 	<style>
+		body {
+			font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+		}
 		.chat {
 			position: absolute;
 			top: 0; right: 0; bottom: 0;
@@ -45,12 +24,57 @@
 		}
 		
 		.chat ul {
+			position: absolute;
+			top: 50px; bottom: 50px;
+			left: 0; right: 0;
+			overflow: hidden;
 			list-style: none;
 			margin: 0;
-			padding: 0;	
+			padding: 10px;	
 		}
 		
 	</style>
+</head>
+<body>
+	<header>
+		<h1>Welcome to Pets!</h1>
+	</header>
+	
+	<main></main>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
+	<script src="js/getToken.js"></script>
+	<script src='js/ractive.js'></script>
+	<script src="/socket.io/socket.io.js"></script>
+	
+	<script id="app" type="text/html">
+		<div><a href='login.html' onclick="@this.logout();">log out</a></div>
+		<chat></chat>
+		<h2>Pets</h2>
+		<ul>
+			{{#each pets as pet:i}}
+				<li>
+					{{pet.name}} the {{pet.type}}
+					<button on-click="@this.remove( pet._id, i )">delete</button>	
+				</li>
+			{{/each}}
+		</ul>
+		<add-new on-added="@this.add($1)"></add-new>
+	</script>
+	
+	<script id="add-new" type="text/html">
+		<h3>Add a new pet</h3>
+		<form on-submit="@this.added()"
+			  onsubmit="return false;">
+			<div>
+				<label>name: <input value="{{animal.name}}" placeholder="name"></label>
+			</div>
+			<div>
+				<label>type: <input value="{{animal.type}}" placeholder="type"></label>
+			</div>
+			<button type="submit">Add</button>
+		</form>
+	</script>
 	
 	<script id="chat" type="text/html">
 		<section class="chat">
@@ -61,7 +85,7 @@
 				{{/each}}
 			</ul>
 			<textarea class="message" 
-				      on-keypress="sendMessage( event.original )" 
+				      on-keypress="@this.sendMessage( event.original )" 
 					  value="{{message}}"></textarea>
 		</section>
 	</script>
@@ -109,13 +133,44 @@
 				}
 			});
 			
+			Ractive.components['add-new'] = Ractive.extend({
+				template: '#add-new',
+				data() { return { animal: {} }; },
+				added(){
+					const animal = this.get( 'animal' );
+					this.fire( 'added', animal );
+					this.set( 'animal' );
+					document.activeElement.blur();
+				}
+			});
+			
 			const app = new Ractive({
 				el: 'main',
 				template: '#app',
 				oninit() {
 					request.get( '/pets' )
 						.set( 'token', token )
-						.end( ( err, res ) => this.set( 'pets', res.body ) )
+						.end( ( err, res ) => {
+							if ( err ) console.log( err );
+							else this.set( 'pets', res.body ); 
+						})
+				},
+				add( pet ) {
+					request.post( '/pets' )
+						.set( 'token', token )
+						.send( pet )
+						.end( ( err, res ) => {
+							if ( err ) console.log( err );
+							else this.push( 'pets', res.body ); 
+						});
+				},
+				remove( id, index ) {
+					request.del( `/pets/${id}` )
+						.set( 'token', token )
+						.end( ( err, res ) => {
+							if ( err ) console.log( err );
+							else this.splice( 'pets', index, 1 ); 
+						});				
 				}
 			});
 			
