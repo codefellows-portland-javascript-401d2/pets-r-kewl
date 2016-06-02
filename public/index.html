@@ -5,71 +5,56 @@
 	<title>Welcome to pets</title>
 </head>
 <body>
+	<header>
+		<h1>Welcome to Pets!</h1>
+	</header>
 	
-	<h1>Welcome to Pets!</h1>
+	<main></main>
 	
-	<a href='login.html' onclick="logout();">log out</a>
-	
-	<h2>Pets</h2>
-	<pre id="output"></pre>
-	
-	<h2>One Pet</h2>
-	<pre id="pet"></pre>
-	<a href='#' onclick='tweetAbout(); return false;'>
-		Tweet how much you love this pet!
-	</a>
-
-
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/superagent/1.2.0/superagent.min.js"></script>
+	<script src="js/getToken.js"></script>
+	<script src='http://cdn.ractivejs.org/edge/ractive.js'></script>
+	<script src="/socket.io/socket.io.js"></script>
+
 	<script>
-		function logout(){
-			localStorage.removeItem( 'token' );
-			window.location = 'login.html';
-		}
-		
-		var token = localStorage.token;
-		if ( !token ) logout();
-		else {
-			superagent
-				.get( '/auth/validate')
-				.set( 'token', token )
-				.end( function( err ) {
-					if ( err ) logout();
-				});
-		}
+		function initApp( token ){
+			const request = superagent;
 			
-	</script>
-	
-	<script>
-		var petId = -1;
-		var output = document.getElementById( 'output' );
-		var pet = document.getElementById( 'pet' );
-		var request = superagent;
-		request
-			.get( '/pets' )
-			.set( 'token', token )
-			.end( ( err, res ) => {
-				output.textContent = JSON.stringify( res.body, true, 2 );
-				
-				petId = res.body[0]._id
-				request
-					.get( '/pets/' + petId )
-					.set( 'token', token )
-					.end( ( err, res ) => {
-						pet.textContent = JSON.stringify( res.body, true, 2 );
-					})
+			const app = new Ractive({
+				el: 'main',
+				template: '#app',
+				oninit() {
+					request.get( '/pets' )
+						.set( 'token', token )
+						.end( ( err, res ) => this.set( 'pets', res.body ) )
+				}
 			});
 			
-		function tweetAbout(){
-			request
-				.post( `/pets/${petId}/tweet` )
-				.set( 'token', token )
-				.end( ( err, res ) => {
-					if ( err ) console.log( err );
-					console.log( res.body );
-				})
+  			const socket = io();	
 		}
+		
 	</script>
+	<script>
+		getToken( superagent )
+			.then( initApp, err => {
+				console.log( err );
+				localStorage.removeItem( 'token' );
+				window.location = 'login.html';	
+			});
+	</script>
+	
+	
+	<script id="app" type="text/html">
+		<div><a href='login.html' onclick="logout();">log out</a></div>
+		<h2>Pets</h2>
+		<ul>
+			{{#each pets as pet}}
+				<li>{{pet.name}} the {{pet.type}}</li>
+			{{/each}}
+		</ul>
+	</script>
+	
+	
 	
 </body>
 </html>

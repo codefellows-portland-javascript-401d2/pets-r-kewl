@@ -1,8 +1,12 @@
 const router = require( 'express' ).Router();
 const jsonParser = require( 'body-parser' ).json();
 const User = require( '../models/user' );
-const token = require( '../lib/token' );
-const ensureAuth = require( '../lib/ensureAuth' );
+const token = require( '../lib/auth/token' );
+const userAuth = require( '../lib/auth/userAuth' );
+
+router.get( '/validate', userAuth, ( req, res ) => {
+	res.json({ valid: true });
+});
 
 router.post('/signup', jsonParser, ( req, res, next ) => {
 	const { username, password } = req.body;
@@ -23,9 +27,6 @@ router.post('/signup', jsonParser, ( req, res, next ) => {
 		.catch( next );
 });
 
-router.get( '/validate', ensureAuth, ( req, res ) => {
-	res.json({ valid: true });
-});
 
 router.get( '/twitter/callback', ( req, res, next ) => {
 	
