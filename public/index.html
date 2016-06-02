@@ -69,7 +69,7 @@
 	</script>
 	
 	<script id="pet-types" type="text/html">	
-		<select value="{{selected}}">
+		<select value="{{selected}}" {{#if required}}required{{/if}}>
 			<option value="{{''}}" {{#if disablePlaceholder}}disabled{{/if}}>
 				{{placeholder || 'Select a type...' }}
 			</option>
@@ -84,11 +84,11 @@
 		<form on-submit="@this.added()"
 			  onsubmit="return false;">
 			<div>
-				<label>name: <input value="{{animal.name}}" placeholder="name"></label>
+				<label>name: <input value="{{animal.name}}" required placeholder="name"></label>
 			</div>
 			<div>
 				<label>type: 
-					<pet-types types="{{types}}" selected="{{animal.type}}"/>
+					<pet-types types="{{types}}" required="true" selected="{{animal.type}}"/>
 				</label>
 			</div>
 			<button type="submit">Add</button>
