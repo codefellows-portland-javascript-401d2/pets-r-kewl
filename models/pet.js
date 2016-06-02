@@ -7,15 +7,16 @@ const petSchema = new Schema({
 		required: true 
 	},
 	type: { 
-		type: String, 
-		default: 'bird' 
+		type: Schema.Types.ObjectId,
+		required: true, 
+		ref: 'Type'
 	}
 });
 
 petSchema.statics.query = function ( query, cb ) {
 	const validated = {};
 	if ( query.type ) validated.type = query.type;
-	return this.model('Pet').find( query, cb );
+	return this.model('Pet').find( validated, cb );
 };
 
 module.exports = mongoose.model( 'Pet', petSchema );

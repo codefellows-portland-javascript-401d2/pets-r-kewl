@@ -51,17 +51,34 @@
 		<div><a href='login.html' onclick="@this.logout();">log out</a></div>
 		<chat></chat>
 		<h2>Pets</h2>
+		<div>filter: 
+			<pet-types types="{{types}}" selected="{{filter}}"
+					   disablePlaceholder="false" placeholder="Show All"/>
+		</div>
 		<ul>
 			{{#each pets as pet:i}}
+				{{#if !filter || filter == pet.type }}
 				<li>
-					{{pet.name}} the {{pet.type}}
+					{{pet.name}} the {{types[pet.type]}}
 					<button on-click="@this.remove( pet._id, i )">delete</button>	
 				</li>
+				{{/if}}
 			{{/each}}
 		</ul>
-		<add-new on-added="@this.add($1)"></add-new>
+		<add-new types="{{types}}", on-added="@this.add($1)"></add-new>
 	</script>
 	
+	<script id="pet-types" type="text/html">	
+		<select value="{{selected}}">
+			<option value="{{''}}" {{#if disablePlaceholder}}disabled{{/if}}>
+				{{placeholder || 'Select a type...' }}
+			</option>
+			{{#each types as name:id}}
+				<option value="{{id}}">{{name}}</option>
+			{{/each}}
+		</select>		
+	</script>
+
 	<script id="add-new" type="text/html">
 		<h3>Add a new pet</h3>
 		<form on-submit="@this.added()"
@@ -70,7 +87,9 @@
 				<label>name: <input value="{{animal.name}}" placeholder="name"></label>
 			</div>
 			<div>
-				<label>type: <input value="{{animal.type}}" placeholder="type"></label>
+				<label>type: 
+					<pet-types types="{{types}}" selected="{{animal.type}}"/>
+				</label>
 			</div>
 			<button type="submit">Add</button>
 		</form>
@@ -94,6 +113,8 @@
 		function initApp( token ){
 			
 			const request = superagent;
+			
+			Ractive.prototype.isolated = true;
 			
 			Ractive.components.chat = Ractive.extend({
 				template: '#chat',
@@ -133,9 +154,18 @@
 				}
 			});
 			
+			Ractive.components['pet-types'] = Ractive.extend({
+				template: '#pet-types'
+			});
+			
 			Ractive.components['add-new'] = Ractive.extend({
 				template: '#add-new',
-				data() { return { animal: {} }; },
+				data() { 
+					return { 
+						animal: {},
+						types: null 
+					}; 
+				},
 				added(){
 					const animal = this.get( 'animal' );
 					this.fire( 'added', animal );
@@ -144,16 +174,33 @@
 				}
 			});
 			
+			function get( url ) {
+				return new Promise( ( resolve, reject ) => {
+					request.get( url )
+						.set( 'token', token )
+						.end( ( err, res ) => {
+							if ( err ) reject( err );
+							else resolve( res.body ); 
+						})
+				})
+				.catch( err => console.log( err ) );
+			}
+			
 			const app = new Ractive({
 				el: 'main',
 				template: '#app',
+				data: {
+					pets: null,
+					types: null
+				},
 				oninit() {
-					request.get( '/pets' )
-						.set( 'token', token )
-						.end( ( err, res ) => {
-							if ( err ) console.log( err );
-							else this.set( 'pets', res.body ); 
-						})
+					get( '/pets' ).then( pets => {
+						this.set( 'pets', pets ); 
+					});
+					
+					get( '/pets/types' ).then( types => {
+						this.set( 'types', types ); 
+					});
 				},
 				add( pet ) {
 					request.post( '/pets' )
