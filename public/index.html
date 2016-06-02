@@ -89,6 +89,11 @@
 					socket.on( 'invalid', err => {
 						console.log( err );
 					});
+					
+					socket.on( 'messages', messages => {
+						this.set( 'messages', messages );
+						socket.off( 'messages' );
+					});
 					  
 					socket.on( 'message', message => {
 						this.push( 'messages', message );
